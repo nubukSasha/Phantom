@@ -9,6 +9,7 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  CARGO_NET_RETRY: 5
 
 jobs:
   build:
@@ -38,8 +39,6 @@ jobs:
       # ── Install cargo helpers ──
       - name: Install cargo-ndk
         run: cargo install cargo-ndk
-        env:
-          CARGO_NET_RETRY: 5
 
       # ── Build native libraries ──
       - name: Build phantom_ffi (arm64-v8a)
