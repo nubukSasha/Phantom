@@ -40,7 +40,8 @@ jobs:
       # ── Install cargo helpers ──
       - name: Install cargo-ndk & uniffi_bindgen
         run: |
-          cargo install cargo-ndk uniffi_bindgen
+          cargo install cargo-ndk
+          cargo install uniffi_bindgen --version 0.28.1
 
       # ── Build native libraries ──
       - name: Build phantom_ffi (arm64-v8a)
