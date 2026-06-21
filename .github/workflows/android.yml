@@ -87,7 +87,7 @@ jobs:
               let cfg = a.next().expect("usage: gen <lib.so> <out> <cfg>");
               uniffi_bindgen::library_mode::generate_bindings(
                   Utf8Path::new(&lib), None,
-                  &uniffi_bindgen::bindings::kotlin::KotlinBindingGenerator,
+                  &uniffi_bindgen::bindings::KotlinBindingGenerator,
                   &uniffi_bindgen::EmptyCrateConfigSupplier,
                   Some(Utf8Path::new(&cfg)),
                   Utf8Path::new(&out), true,
