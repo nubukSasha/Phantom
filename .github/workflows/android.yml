@@ -38,10 +38,8 @@ jobs:
       - uses: Swatinem/rust-cache@v2
 
       # ── Install cargo helpers ──
-      - name: Install cargo-ndk & uniffi_bindgen
-        run: |
-          cargo install cargo-ndk
-          cargo install --git https://github.com/mozilla/uniffi-rs.git --tag v0.28.1 uniffi_bindgen --features cli
+      - name: Install cargo-ndk
+        run: cargo install cargo-ndk
 
       # ── Build native libraries ──
       - name: Build phantom_ffi (arm64-v8a)
@@ -72,10 +70,36 @@ jobs:
       # ── Generate Kotlin bindings from compiled library ──
       - name: Generate UniFFI Kotlin bindings
         run: |
-          uniffi-bindgen generate \
-            --library target/aarch64-linux-android/release/libphantom_ffi.so \
-            --language kotlin \
-            --out-dir app/src/main/kotlin
+          mkdir -p /tmp/uniffi-gen/src
+          cat > /tmp/uniffi-gen/Cargo.toml << 'CARGOEOF'
+          [package]
+          name = "uniffi-gen"
+          version = "0.1.0"
+          edition = "2021"
+          [dependencies]
+          uniffi_bindgen = "=0.28.1"
+          camino = "1"
+          CARGOEOF
+          cat > /tmp/uniffi-gen/src/main.rs << 'RUSTEOF'
+          use camino::Utf8Path;
+          fn main() {
+              let mut a = std::env::args().skip(1);
+              let lib = a.next().expect("usage: gen <lib.so> <out> <cfg>");
+              let out = a.next().expect("usage: gen <lib.so> <out> <cfg>");
+              let cfg = a.next().expect("usage: gen <lib.so> <out> <cfg>");
+              uniffi_bindgen::library_mode::generate_bindings(
+                  Utf8Path::new(&lib), None,
+                  &uniffi_bindgen::bindings::kotlin::KotlinBindingGenerator,
+                  &uniffi_bindgen::EmptyCrateConfigSupplier,
+                  Some(Utf8Path::new(&cfg)),
+                  Utf8Path::new(&out), true,
+              ).expect("generate_bindings failed");
+          }
+          RUSTEOF
+          cargo run --release --manifest-path /tmp/uniffi-gen/Cargo.toml -- \
+            target/aarch64-linux-android/release/libphantom_ffi.so \
+            app/src/main/kotlin \
+            ffi/uniffi.toml
 
       # ── Build Android APK ──
       - uses: gradle/actions/setup-gradle@v3
