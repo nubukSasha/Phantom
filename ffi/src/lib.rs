@@ -20,6 +20,13 @@ pub enum KeystoreError {
     Error { msg: String },
 }
 
+impl KeystoreError {
+    fn msg(self) -> String {
+        let KeystoreError::Error { msg } = self;
+        msg
+    }
+}
+
 #[uniffi::export(callback_interface)]
 pub trait FfiKeystoreOps: Send + Sync + std::fmt::Debug {
     fn ed25519_generate(&self, alias: String) -> Result<Vec<u8>, KeystoreError>;
@@ -49,46 +56,46 @@ impl std::fmt::Debug for FfiKeystoreAdapter<'_> {
 impl KeystoreOps for FfiKeystoreAdapter<'_> {
     fn ed25519_generate(&self, alias: &str) -> Result<[u8; 32], String> {
         self.inner.ed25519_generate(alias.to_string())
-            .map_err(|e| e.msg)
+            .map_err(|e| e.msg())
             .and_then(|v| <[u8; 32]>::try_from(v.as_slice()).map_err(|_| "ed25519 pk len".into()))
     }
     fn ed25519_public(&self, alias: &str) -> Result<[u8; 32], String> {
         self.inner.ed25519_public(alias.to_string())
-            .map_err(|e| e.msg)
+            .map_err(|e| e.msg())
             .and_then(|v| <[u8; 32]>::try_from(v.as_slice()).map_err(|_| "ed25519 pk len".into()))
     }
     fn ed25519_sign(&self, alias: &str, msg: &[u8]) -> Result<[u8; 64], String> {
         self.inner.ed25519_sign(alias.to_string(), msg.to_vec())
-            .map_err(|e| e.msg)
+            .map_err(|e| e.msg())
             .and_then(|v| <[u8; 64]>::try_from(v.as_slice()).map_err(|_| "ed25519 sig len".into()))
     }
     fn ed25519_delete(&self, alias: &str) -> Result<(), String> {
-        self.inner.ed25519_delete(alias.to_string()).map_err(|e| e.msg)
+        self.inner.ed25519_delete(alias.to_string()).map_err(|e| e.msg())
     }
     fn x25519_generate(&self, alias: &str) -> Result<[u8; 32], String> {
         self.inner.x25519_generate(alias.to_string())
-            .map_err(|e| e.msg)
+            .map_err(|e| e.msg())
             .and_then(|v| <[u8; 32]>::try_from(v.as_slice()).map_err(|_| "x25519 pk len".into()))
     }
     fn x25519_public(&self, alias: &str) -> Result<[u8; 32], String> {
         self.inner.x25519_public(alias.to_string())
-            .map_err(|e| e.msg)
+            .map_err(|e| e.msg())
             .and_then(|v| <[u8; 32]>::try_from(v.as_slice()).map_err(|_| "x25519 pk len".into()))
     }
     fn x25519_agree(&self, alias: &str, peer_public: &[u8; 32]) -> Result<[u8; 32], String> {
         self.inner.x25519_agree(alias.to_string(), peer_public.to_vec())
-            .map_err(|e| e.msg)
+            .map_err(|e| e.msg())
             .and_then(|v| <[u8; 32]>::try_from(v.as_slice()).map_err(|_| "x25519 shared len".into()))
     }
     fn x25519_delete(&self, alias: &str) -> Result<(), String> {
-        self.inner.x25519_delete(alias.to_string()).map_err(|e| e.msg)
+        self.inner.x25519_delete(alias.to_string()).map_err(|e| e.msg())
     }
     fn wrap_key(&self, alias: &str, key: &[u8; 32]) -> Result<Vec<u8>, String> {
-        self.inner.wrap_key(alias.to_string(), key.to_vec()).map_err(|e| e.msg)
+        self.inner.wrap_key(alias.to_string(), key.to_vec()).map_err(|e| e.msg())
     }
     fn unwrap_key(&self, alias: &str, wrapped: &[u8]) -> Result<[u8; 32], String> {
         self.inner.unwrap_key(alias.to_string(), wrapped.to_vec())
-            .map_err(|e| e.msg)
+            .map_err(|e| e.msg())
             .and_then(|v| <[u8; 32]>::try_from(v.as_slice()).map_err(|_| "unwrap key len".into()))
     }
 }
@@ -442,7 +449,7 @@ impl PhantomCore {
             let _ = phantom_core::storage::contact::delete_contact(&engine, c.id);
         }
         for c in &contacts {
-            let _ = phantom_core::storage::message::delete_conversation(&engine, c.contact_id);
+            let _ = phantom_core::storage::message::delete_conversation(&engine, c.id);
         }
         Ok(())
     }
