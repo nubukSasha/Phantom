@@ -9,7 +9,7 @@ crate-type = ["cdylib", "staticlib"]
 name = "phantom_ffi"
 
 [dependencies]
-core = { path = "../core", package = "phantom-core", default-features = false }
+phantom_core = { path = "../core", package = "phantom-core", default-features = false }
 uniffi = { version = "0.28", features = ["tokio"] }
 tokio = { version = "1", features = ["rt", "macros"] }
 sha3 = "0.10"
@@ -18,4 +18,4 @@ tracing = "0.1"
 
 [features]
 default = []
-tor = ["core/tor"]
+tor = ["phantom_core/tor"]

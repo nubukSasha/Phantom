@@ -1,16 +1,14 @@
 uniffi::setup_scaffolding!();
-extern crate core;
-
 use std::sync::Mutex;
 
-use core::crypto::identity;
-use core::crypto::message;
-use core::crypto::static_key;
-use core::crypto::types::{IdentityPublicKey, StaticPublicKey};
-use core::keystore::KeystoreOps;
-use core::storage::engine::Engine;
-use core::storage::error::StorageError;
-use core::storage::models::Direction;
+use phantom_core::crypto::identity;
+use phantom_core::crypto::message;
+use phantom_core::crypto::static_key;
+use phantom_core::crypto::types::{IdentityPublicKey, StaticPublicKey};
+use phantom_core::keystore::KeystoreOps;
+use phantom_core::storage::engine::Engine;
+use phantom_core::storage::error::StorageError;
+use phantom_core::storage::models::Direction;
 use sha3::{Digest, Sha3_256};
 
 // ────────────────────────────────────────────────────────────
@@ -36,7 +34,7 @@ pub trait FfiKeystoreOps: Send + Sync + std::fmt::Debug {
     fn unwrap_key(&self, alias: String, wrapped: Vec<u8>) -> Result<Vec<u8>, KeystoreError>;
 }
 
-// Temporary adapter: borrows a &dyn FfiKeystoreOps to implement core::KeystoreOps
+// Temporary adapter: borrows a &dyn FfiKeystoreOps to implement phantom_core::KeystoreOps
 
 struct FfiKeystoreAdapter<'a> {
     inner: &'a dyn FfiKeystoreOps,
@@ -287,7 +285,7 @@ impl PhantomCore {
             .ok_or_else(|| PhantomError::InvalidInput { msg: "static_pk: 32 bytes".into() })?;
 
         let engine = self.engine.lock().unwrap();
-        let id = core::storage::contact::add_contact(
+        let id = phantom_core::storage::contact::add_contact(
             &engine, &alias,
             &IdentityPublicKey(id_arr),
             &StaticPublicKey(st_arr),
@@ -298,7 +296,7 @@ impl PhantomCore {
 
     pub fn get_contact(&self, id: i64) -> Result<FfiContact, PhantomError> {
         let engine = self.engine.lock().unwrap();
-        let c = core::storage::contact::get_contact(&engine, id)?;
+        let c = phantom_core::storage::contact::get_contact(&engine, id)?;
         Ok(FfiContact {
             id: c.id,
             alias: c.alias,
@@ -312,7 +310,7 @@ impl PhantomCore {
 
     pub fn list_contacts(&self) -> Vec<FfiContactSummary> {
         let engine = self.engine.lock().unwrap();
-        core::storage::contact::list_contacts(&engine)
+        phantom_core::storage::contact::list_contacts(&engine)
             .unwrap_or_default()
             .into_iter()
             .map(|c| FfiContactSummary {
@@ -329,7 +327,7 @@ impl PhantomCore {
 
     pub fn delete_contact(&self, id: i64) -> Result<(), PhantomError> {
         let engine = self.engine.lock().unwrap();
-        core::storage::contact::delete_contact(&engine, id)?;
+        phantom_core::storage::contact::delete_contact(&engine, id)?;
         Ok(())
     }
 
@@ -343,7 +341,7 @@ impl PhantomCore {
         let adapter = FfiKeystoreAdapter { inner: &*self.keystore };
         let engine = self.engine.lock().unwrap();
 
-        let contact = core::storage::contact::get_contact(&engine, contact_id)?;
+        let contact = phantom_core::storage::contact::get_contact(&engine, contact_id)?;
 
         let now = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
@@ -365,7 +363,7 @@ impl PhantomCore {
             .encode()
             .map_err(|e| PhantomError::Crypto { msg: e.to_string() })?;
 
-        let message_id = core::storage::message::insert_message(
+        let message_id = phantom_core::storage::message::insert_message(
             &engine,
             contact_id,
             Direction::Sent,
@@ -384,7 +382,7 @@ impl PhantomCore {
         offset: u32,
     ) -> Vec<FfiMessage> {
         let engine = self.engine.lock().unwrap();
-        core::storage::message::get_messages(&engine, contact_id, limit, offset)
+        phantom_core::storage::message::get_messages(&engine, contact_id, limit, offset)
             .unwrap_or_default()
             .into_iter()
             .map(|m| FfiMessage {
@@ -401,7 +399,7 @@ impl PhantomCore {
 
     pub fn get_conversations(&self) -> Vec<FfiConversationSummary> {
         let engine = self.engine.lock().unwrap();
-        core::storage::message::get_conversations(&engine)
+        phantom_core::storage::message::get_conversations(&engine)
             .unwrap_or_default()
             .into_iter()
             .map(|c| FfiConversationSummary {
@@ -418,7 +416,7 @@ impl PhantomCore {
 
     pub fn mark_seen(&self, contact_id: i64) -> Result<(), PhantomError> {
         let engine = self.engine.lock().unwrap();
-        core::storage::message::mark_seen(&engine, contact_id)?;
+        phantom_core::storage::message::mark_seen(&engine, contact_id)?;
         Ok(())
     }
 
@@ -439,12 +437,12 @@ impl PhantomCore {
 
     pub fn destroy(&self) -> Result<(), PhantomError> {
         let engine = self.engine.lock().unwrap();
-        let contacts = core::storage::contact::list_contacts(&engine).unwrap_or_default();
+        let contacts = phantom_core::storage::contact::list_contacts(&engine).unwrap_or_default();
         for c in &contacts {
-            let _ = core::storage::contact::delete_contact(&engine, c.id);
+            let _ = phantom_core::storage::contact::delete_contact(&engine, c.id);
         }
         for c in &contacts {
-            let _ = core::storage::message::delete_conversation(&engine, c.contact_id);
+            let _ = phantom_core::storage::message::delete_conversation(&engine, c.contact_id);
         }
         Ok(())
     }
