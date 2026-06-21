@@ -80,7 +80,7 @@ class AndroidKeystoreCallback : FfiKeystoreOps {
             )
             .build()
         val kpg = KeyPairGenerator.getInstance(
-            KeyProperties.KEY_ALGORITHM_XDH, "AndroidKeyStore"
+            "XDH", "AndroidKeyStore"
         )
         kpg.initialize(spec)
         val kp = kpg.generateKeyPair()
@@ -141,7 +141,7 @@ class AndroidKeystoreCallback : FfiKeystoreOps {
             return keyStore.getKey(alias, null) as SecretKey
         }
         val spec = KeyGenParameterSpec.Builder(
-            alias, KeyProperties.PURPOSE_WRAP_KEY or KeyProperties.PURPOSE_UNWRAP_KEY
+            alias, KeyProperties.PURPOSE_WRAP_KEY or 64
         )
             .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
             .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
