@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Phantom</string>
+    <string name="channel_name">Messages</string>
+    <string name="channel_desc">Incoming message notifications</string>
+    <string name="foreground_notification_title">Phantom is running</string>
+    <string name="foreground_notification_text">Listening for messages via Tor</string>
+    <string name="add_contact">Add contact</string>
+    <string name="settings">Settings</string>
+    <string name="send">Send</string>
+    <string name="message_hint">Type a message…</string>
+    <string name="no_conversations">No conversations yet</string>
+    <string name="scan_qr">Scan QR</string>
+    <string name="my_qr">My QR</string>
+    <string name="lock">Lock</string>
+    <string name="unlock">Unlock</string>
+    <string name="destroy">Wipe all data</string>
+    <string name="confirm_destroy">Are you sure? This cannot be undone.</string>
+</resources>

@@ -1,0 +1,50 @@
+[package]
+name = "phantom-core"
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+
+[features]
+default = []
+tor = [
+    "dep:arti-client",
+    "dep:tor-hsclient",
+    "dep:tor-hsservice",
+    "dep:tor-rtcompat",
+    "dep:tokio",
+]
+
+[dependencies]
+# ── Crypto ───────────────────────────────────────────────────
+x25519-dalek = "2"
+ed25519-dalek = "2"
+chacha20poly1305 = { version = "0.10", features = ["xchacha20"] }
+hkdf = "0.12"
+sha2 = "0.10"
+rand = "0.8"
+zeroize = { version = "1", features = ["zeroize_derive"] }
+
+# ── Serialisation ────────────────────────────────────────────
+serde = { version = "1", features = ["derive"] }
+postcard = { version = "1", default-features = false, features = ["alloc"] }
+
+# ── Error ────────────────────────────────────────────────────
+thiserror = "1"
+
+# ── Utility ──────────────────────────────────────────────────
+hex = "0.4"
+tracing = "0.1"
+
+
+# ── Storage ──────────────────────────────────────────────────
+rusqlite = { version = "0.31", features = ["bundled"] }
+
+# ── Tor (Arti) ───────────────────────────────────────────────
+arti-client = { version = "0.12", optional = true }
+tor-hsclient = { version = "0.12", optional = true }
+tor-hsservice = { version = "0.12", optional = true }
+tor-rtcompat = { version = "0.12", default-features = false, features = ["tokio"], optional = true }
+tokio = { version = "1", features = ["rt-multi-thread", "net", "io-util", "time", "macros", "sync"], optional = true }
+
+[target.'cfg(target_os = "android")'.dependencies]
+getrandom = { version = "0.2", features = ["rdrand"] }

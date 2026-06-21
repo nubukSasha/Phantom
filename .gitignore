@@ -1,0 +1,23 @@
+# Rust
+target/
+**/*.rs.bk
+Cargo.lock
+
+# Android
+app/build/
+local.properties
+*.iml
+.gradle/
+build/
+*.apk
+*.aab
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*~
+
+# OS
+.DS_Store
+Thumbs.db
