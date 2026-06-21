@@ -1,0 +1,90 @@
+name: Build Phantom APK
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # ── JDK 21 ──
+      - uses: actions/setup-java@v4
+        with:
+          java-version: 21
+          distribution: temurin
+
+      # ── Android SDK + NDK ──
+      - uses: android-actions/setup-android@v3
+      - name: Install NDK & platform
+        run: |
+          sdkmanager "platforms;android-34" "build-tools;34.0.0" "ndk;25.2.9519653" 2>&1 | tail -20
+
+      # ── Rust toolchain ──
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Add Android Rust targets
+        run: |
+          rustup target add aarch64-linux-android armv7-linux-androideabi x86_64-linux-android
+
+      - uses: Swatinem/rust-cache@v2
+
+      # ── Install cargo helpers ──
+      - name: Install cargo-ndk & uniffi_bindgen
+        run: |
+          cargo install cargo-ndk uniffi_bindgen
+
+      # ── Build native libraries ──
+      - name: Build phantom_ffi (arm64-v8a)
+        run: >
+          cargo ndk --target aarch64-linux-android --platform 28
+          build --release --manifest-path ffi/Cargo.toml
+
+      - name: Build phantom_ffi (armeabi-v7a)
+        run: >
+          cargo ndk --target armv7-linux-androideabi --platform 28
+          build --release --manifest-path ffi/Cargo.toml
+
+      - name: Build phantom_ffi (x86_64)
+        run: >
+          cargo ndk --target x86_64-linux-android --platform 28
+          build --release --manifest-path ffi/Cargo.toml
+
+      # ── Stage .so files ──
+      - name: Copy .so to jniLibs
+        run: |
+          mkdir -p app/src/main/jniLibs/arm64-v8a
+          mkdir -p app/src/main/jniLibs/armeabi-v7a
+          mkdir -p app/src/main/jniLibs/x86_64
+          cp target/aarch64-linux-android/release/libphantom_ffi.so  app/src/main/jniLibs/arm64-v8a/
+          cp target/armv7-linux-androideabi/release/libphantom_ffi.so app/src/main/jniLibs/armeabi-v7a/
+          cp target/x86_64-linux-android/release/libphantom_ffi.so   app/src/main/jniLibs/x86_64/
+
+      # ── Generate Kotlin bindings ──
+      - name: Generate UniFFI Kotlin bindings
+        run: |
+          uniffi-bindgen generate ffi/src/lib.rs \
+            --language kotlin \
+            --out-dir app/src/main/kotlin
+
+      # ── Build Android APK ──
+      - uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: "8.5"
+      - name: Build debug APK
+        run: gradle assembleDebug
+
+      # ── Upload artifact ──
+      - uses: actions/upload-artifact@v4
+        with:
+          name: phantom-debug
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error

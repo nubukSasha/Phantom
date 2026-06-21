@@ -47,4 +47,4 @@ tor-rtcompat = { version = "0.12", default-features = false, features = ["tokio"
 tokio = { version = "1", features = ["rt-multi-thread", "net", "io-util", "time", "macros", "sync"], optional = true }
 
 [target.'cfg(target_os = "android")'.dependencies]
-getrandom = { version = "0.2", features = ["rdrand"] }
+getrandom = "0.2"
