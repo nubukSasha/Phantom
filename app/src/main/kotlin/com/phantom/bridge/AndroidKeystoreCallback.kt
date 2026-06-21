@@ -11,6 +11,7 @@ import javax.crypto.KeyAgreement
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
+import com.phantom.FfiKeystoreOps
 
 class AndroidKeystoreCallback : FfiKeystoreOps {
 

@@ -9,9 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -25,11 +23,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import com.phantom.PhantomApp
 import com.phantom.ui.components.PhantomTopBar
-import com.phantom.ui.theme.DarkSurfaceVariant
 import com.phantom.ui.theme.ErrorRed
-import com.phantom.ui.theme.OnDark
-import com.phantom.ui.theme.OnDarkSecondary
-import com.phantom.ui.theme.Teal
 import kotlinx.coroutines.launch
 
 @Composable
@@ -67,7 +61,6 @@ fun AddContactScreen(
                 label = { Text("Alias") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
-                colors = textFieldColors(),
             )
             Spacer(modifier = Modifier.height(12.dp))
             OutlinedTextField(
@@ -77,7 +70,6 @@ fun AddContactScreen(
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
                 textStyle = androidx.compose.ui.text.TextStyle(fontFamily = FontFamily.Monospace),
-                colors = textFieldColors(),
             )
             Spacer(modifier = Modifier.height(12.dp))
             OutlinedTextField(
@@ -87,7 +79,6 @@ fun AddContactScreen(
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
                 textStyle = androidx.compose.ui.text.TextStyle(fontFamily = FontFamily.Monospace),
-                colors = textFieldColors(),
             )
             Spacer(modifier = Modifier.height(12.dp))
             OutlinedTextField(
@@ -97,7 +88,6 @@ fun AddContactScreen(
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
                 textStyle = androidx.compose.ui.text.TextStyle(fontFamily = FontFamily.Monospace),
-                colors = textFieldColors(),
             )
             Spacer(modifier = Modifier.height(12.dp))
 
@@ -109,7 +99,6 @@ fun AddContactScreen(
             Button(
                 onClick = onScan,
                 modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = DarkSurfaceVariant),
             ) { Text("Scan QR Code") }
             Spacer(modifier = Modifier.height(8.dp))
             Button(
@@ -138,19 +127,7 @@ fun AddContactScreen(
                 },
                 enabled = alias.isNotBlank() && !isSaving,
                 modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = Teal),
             ) { Text(if (isSaving) "Saving…" else "Save") }
         }
     }
 }
-
-@Composable
-private fun textFieldColors() = OutlinedTextFieldDefaults.colors(
-    focusedBorderColor = Teal,
-    unfocusedBorderColor = DarkSurfaceVariant,
-    focusedTextColor = OnDark,
-    unfocusedTextColor = OnDark,
-    cursorColor = Teal,
-    focusedLabelColor = Teal,
-    unfocusedLabelColor = OnDarkSecondary,
-)

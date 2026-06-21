@@ -3,6 +3,8 @@ package com.phantom.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.phantom.PhantomApp
+import com.phantom.FfiDirection
+import com.phantom.FfiMessage
 import com.phantom.model.Message
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -57,7 +59,7 @@ class ChatViewModel : ViewModel() {
             try {
                 val core = PhantomApp.instance.core
                 val contact = core.getContact(contactId)
-                val msgs = core.getMessages(contactId, limit = 50, offset = 0)
+                val msgs = core.getMessages(contactId, limit = 50u, offset = 0u)
                 _state.value = _state.value.copy(
                     contactAlias = contact.alias,
                     messages = msgs.map { it.toMessage() },

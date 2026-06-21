@@ -5,10 +5,10 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 
 private val DarkColors = darkColorScheme(
-    primary = Teal,
+    primary = CyberPurple,
     onPrimary = DarkBackground,
-    primaryContainer = TealDark,
-    secondary = Teal,
+    primaryContainer = CyberPurpleDark,
+    secondary = CyberBlue,
     background = DarkBackground,
     surface = DarkSurface,
     surfaceVariant = DarkSurfaceVariant,

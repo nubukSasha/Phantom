@@ -9,16 +9,11 @@ import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.phantom.ui.theme.DarkSurfaceVariant
-import com.phantom.ui.theme.OnDark
-import com.phantom.ui.theme.OnDarkSecondary
-import com.phantom.ui.theme.Teal
 
 @Composable
 fun MessageInput(
@@ -37,16 +32,9 @@ fun MessageInput(
         OutlinedTextField(
             value = text,
             onValueChange = onTextChange,
-            placeholder = { Text("Type a message…", color = OnDarkSecondary) },
+            placeholder = { Text("Type a message…") },
             modifier = Modifier.weight(1f),
             shape = RoundedCornerShape(24.dp),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = Teal,
-                unfocusedBorderColor = DarkSurfaceVariant,
-                focusedTextColor = OnDark,
-                unfocusedTextColor = OnDark,
-                cursorColor = Teal,
-            ),
             singleLine = true,
             enabled = !isSending,
         )
@@ -57,7 +45,6 @@ fun MessageInput(
             Icon(
                 imageVector = Icons.Default.Send,
                 contentDescription = "Send",
-                tint = if (text.isNotBlank() && !isSending) Teal else OnDarkSecondary,
             )
         }
     }

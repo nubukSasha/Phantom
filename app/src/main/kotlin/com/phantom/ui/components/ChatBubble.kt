@@ -15,10 +15,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.phantom.model.Direction
-import com.phantom.ui.theme.DarkSurfaceVariant
-import com.phantom.ui.theme.OnDark
-import com.phantom.ui.theme.OnDarkSecondary
-import com.phantom.ui.theme.Teal
 
 @Composable
 fun ChatBubble(
@@ -28,7 +24,7 @@ fun ChatBubble(
     modifier: Modifier = Modifier,
 ) {
     val isSent = direction == Direction.Sent
-    val bubbleColor = if (isSent) Teal.copy(alpha = 0.2f) else DarkSurfaceVariant
+    val bubbleColor = if (isSent) MaterialTheme.colorScheme.primary.copy(alpha = 0.2f) else MaterialTheme.colorScheme.surfaceVariant
     val alignment = if (isSent) Arrangement.End else Arrangement.Start
     val shape = if (isSent) {
         RoundedCornerShape(16.dp, 4.dp, 16.dp, 16.dp)
@@ -51,7 +47,7 @@ fun ChatBubble(
                 Text(
                     text = text,
                     style = MaterialTheme.typography.bodyLarge,
-                    color = OnDark,
+                    color = MaterialTheme.colorScheme.onSurface,
                 )
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -60,7 +56,7 @@ fun ChatBubble(
                     Text(
                         text = formatTime(timestamp),
                         style = MaterialTheme.typography.bodySmall,
-                        color = OnDarkSecondary,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }

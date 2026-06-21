@@ -25,9 +25,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.phantom.ui.components.PhantomTopBar
 import com.phantom.ui.theme.ErrorRed
-import com.phantom.ui.theme.OnDark
-import com.phantom.ui.theme.OnDarkSecondary
-import com.phantom.ui.theme.Teal
 import com.phantom.viewmodel.SettingsEvent
 import com.phantom.viewmodel.SettingsViewModel
 
@@ -89,7 +86,6 @@ fun SettingsScreen(
             )
             Button(
                 onClick = onShowQr,
-                colors = ButtonDefaults.buttonColors(containerColor = Teal),
                 modifier = Modifier.fillMaxWidth(),
             ) { Text("Show QR Code") }
 
@@ -121,7 +117,7 @@ fun SettingsScreen(
 private fun SectionHeader(text: String) {
     Text(
         text = text,
-        color = Teal,
+        color = MaterialTheme.colorScheme.primary,
         modifier = Modifier.padding(bottom = 8.dp),
     )
 }
@@ -133,14 +129,14 @@ private fun InfoRow(
     onCopy: () -> Unit,
 ) {
     Column(modifier = Modifier.padding(vertical = 8.dp)) {
-        Text(text = label, color = OnDarkSecondary, style = androidx.compose.material3.MaterialTheme.typography.bodySmall)
+        Text(text = label, color = MaterialTheme.colorScheme.onSurfaceVariant, style = androidx.compose.material3.MaterialTheme.typography.bodySmall)
         Text(
             text = value,
-            color = OnDark,
+            color = MaterialTheme.colorScheme.onSurface,
             fontFamily = FontFamily.Monospace,
             style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
             modifier = Modifier.padding(vertical = 4.dp),
         )
-        TextButton(onClick = onCopy) { Text("Copy", color = Teal) }
+        TextButton(onClick = onCopy) { Text("Copy") }
     }
 }

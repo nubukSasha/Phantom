@@ -3,6 +3,7 @@ package com.phantom.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.phantom.PhantomApp
+import com.phantom.FfiConversationSummary
 import com.phantom.model.Chat
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
