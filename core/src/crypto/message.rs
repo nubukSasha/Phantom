@@ -18,8 +18,8 @@ use crate::keystore::KeystoreOps;
 /// * `recipient_static_pk` — recipient's X25519 static public key
 /// * `plaintext` — message bytes to encrypt
 pub fn encrypt_message(
-    keystore: &dyn KeystoreOps,
-    static_alias: &str,
+    _keystore: &dyn KeystoreOps,
+    _static_alias: &str,
     sender_identity_pk: &IdentityPublicKey,
     sender_static_pk: &StaticPublicKey,
     recipient_identity_pk: &IdentityPublicKey,

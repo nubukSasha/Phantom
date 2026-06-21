@@ -13,7 +13,7 @@ impl Engine {
     pub fn open(path: &str) -> Result<Self, StorageError> {
         let conn = rusqlite::Connection::open(path)?;
 
-        let mut engine = Self {
+        let engine = Self {
             conn,
             master_key: None,
         };

@@ -1,7 +1,6 @@
 use super::engine::Engine;
 use super::error::StorageError;
 use super::field;
-use super::master_key::MasterKey;
 use super::models::{ConversationSummary, Direction, Message};
 
 /// Insert a new message into storage.
@@ -149,7 +148,7 @@ pub fn get_conversations(engine: &Engine) -> Result<Vec<ConversationSummary>, St
             contact_id,
             alias,
             onion_address,
-            last_seen,
+            _last_seen,
             ct_opt,
             nonce_opt,
             created_at,

@@ -1,7 +1,6 @@
 use super::engine::Engine;
 use super::error::StorageError;
 use super::field;
-use super::master_key::MasterKey;
 use super::models::{Contact, ContactSummary};
 use crate::crypto::types::{IdentityPublicKey, StaticPublicKey};
 
@@ -131,17 +130,15 @@ pub fn list_contacts(engine: &Engine) -> Result<Vec<ContactSummary>, StorageErro
             "SELECT content_plain, content_nonce FROM messages
              WHERE contact_id = ?1 ORDER BY created_at DESC LIMIT 1",
         )?;
-        if let Ok(Some((ct, nonce))) = stmt2
+        if let Some(Ok((nonce, ct))) = stmt2
             .query_map([summary.id], |row| {
                 Ok((row.get::<_, Vec<u8>>(0)?, row.get::<_, Vec<u8>>(1)?))
             })?
             .next()
         {
-            if let (Some(nonce), Some(ct)) = (nonce, ct) {
-                if let Ok(plaintext) = field::decrypt_field(mk, &nonce, &ct) {
-                    if let Ok(text) = String::from_utf8(plaintext) {
-                        summary.last_message_preview = Some(text);
-                    }
+            if let Ok(plaintext) = field::decrypt_field(mk, &nonce, &ct) {
+                if let Ok(text) = String::from_utf8(plaintext) {
+                    summary.last_message_preview = Some(text);
                 }
             }
         }

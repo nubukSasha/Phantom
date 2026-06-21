@@ -1,6 +1,6 @@
 use chacha20poly1305::{
     aead::{Aead, AeadCore, KeyInit, OsRng},
-    Key, XChaCha20Poly1305,
+    Key, XChaCha20Poly1305, XNonce,
 };
 
 use super::error::StorageError;
@@ -37,8 +37,7 @@ pub fn decrypt_field(
     }
     let key = Key::from_slice(master_key.as_bytes());
     let cipher = XChaCha20Poly1305::new(key);
-    use chacha20poly1305::aead::Nonce as AeadNonce;
-    let nonce_arr = AeadNonce::from_slice(nonce);
+    let nonce_arr = XNonce::from_slice(nonce);
     cipher
         .decrypt(nonce_arr, ciphertext)
         .map_err(|_| StorageError::AuthFailed)

@@ -3,7 +3,7 @@ use chacha20poly1305::{
     ChaCha20Poly1305, Key, Nonce as AeadNonce,
 };
 
-use super::types::{Nonce, SealedBox, SessionKey, Tag};
+use super::types::{Nonce, SealedBox, SessionKey};
 use crate::error::CryptoError;
 
 pub fn encrypt(key: &SessionKey, plaintext: &[u8]) -> SealedBox {
