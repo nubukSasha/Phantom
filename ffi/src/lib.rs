@@ -442,7 +442,7 @@ impl PhantomCore {
         Ok(())
     }
 
-    pub fn destroy(&self) -> Result<(), PhantomError> {
+    pub fn wipe_all(&self) -> Result<(), PhantomError> {
         let engine = self.engine.lock().unwrap();
         let contacts = phantom_core::storage::contact::list_contacts(&engine).unwrap_or_default();
         for c in &contacts {

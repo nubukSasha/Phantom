@@ -90,5 +90,6 @@ dependencies {
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
 
-    // UniFFI generated bindings (from Rust build step) — included via sourceSets
+    // UniFFI generated bindings use JNA for JNI interop
+    implementation("net.java.dev.jna:jna:5.14.0@aar")
 }

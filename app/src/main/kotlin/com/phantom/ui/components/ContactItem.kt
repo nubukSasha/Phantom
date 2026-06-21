@@ -22,12 +22,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.material3.ExperimentalMaterial3Api
 import com.phantom.model.Chat
 import com.phantom.ui.theme.DarkSurfaceVariant
 import com.phantom.ui.theme.OnlineGreen
 import com.phantom.ui.theme.OnDark
 import com.phantom.ui.theme.OnDarkSecondary
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ContactItem(
     chat: Chat,

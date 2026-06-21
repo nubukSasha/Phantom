@@ -57,7 +57,7 @@ class ChatViewModel : ViewModel() {
             try {
                 val core = PhantomApp.instance.core
                 val contact = core.getContact(contactId)
-                val msgs = core.getMessages(contactId, limit = 50, offset = 0u)
+                val msgs = core.getMessages(contactId, limit = 50, offset = 0)
                 _state.value = _state.value.copy(
                     contactAlias = contact.alias,
                     messages = msgs.map { it.toMessage() },
@@ -110,6 +110,7 @@ class ChatViewModel : ViewModel() {
             direction = when (direction) {
                 FfiDirection.SENT -> com.phantom.model.Direction.Sent
                 FfiDirection.RECEIVED -> com.phantom.model.Direction.Received
+                else -> com.phantom.model.Direction.Received
             },
             createdAt = createdAt,
             deliveredAt = deliveredAt,

@@ -11,7 +11,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Divider
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -94,7 +94,7 @@ fun SettingsScreen(
             ) { Text("Show QR Code") }
 
             Spacer(modifier = Modifier.height(24.dp))
-            HorizontalDivider()
+            Divider()
             Spacer(modifier = Modifier.height(24.dp))
 
             SectionHeader("Security")
@@ -104,7 +104,7 @@ fun SettingsScreen(
             ) { Text(if (state.isLocked) "Unlock Storage" else "Lock Storage") }
 
             Spacer(modifier = Modifier.height(24.dp))
-            HorizontalDivider()
+            Divider()
             Spacer(modifier = Modifier.height(24.dp))
 
             SectionHeader("Danger Zone")

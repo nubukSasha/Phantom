@@ -83,7 +83,7 @@ class SettingsViewModel : ViewModel() {
     private fun destroyAllData() {
         viewModelScope.launch {
             try {
-                PhantomApp.instance.core.destroy()
+                PhantomApp.instance.core.wipeAll()
                 _state.value = _state.value.copy(showDestroyConfirm = false)
                 _navigation.value = SettingsEvent.NavigateBack
             } catch (e: Exception) {

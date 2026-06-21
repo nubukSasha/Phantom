@@ -144,6 +144,7 @@ fun AddContactScreen(
     }
 }
 
+@Composable
 private fun textFieldColors() = OutlinedTextFieldDefaults.colors(
     focusedBorderColor = Teal,
     unfocusedBorderColor = DarkSurfaceVariant,
