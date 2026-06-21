@@ -1,4 +1,5 @@
 uniffi::setup_scaffolding!();
+extern crate core;
 
 use std::sync::Mutex;
 
