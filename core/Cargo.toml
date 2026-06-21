@@ -40,10 +40,10 @@ tracing = "0.1"
 rusqlite = { version = "0.31", features = ["bundled"] }
 
 # ── Tor (Arti) ───────────────────────────────────────────────
-arti-client = { version = "0.12", optional = true }
-tor-hsclient = { version = "0.12", optional = true }
-tor-hsservice = { version = "0.12", optional = true }
-tor-rtcompat = { version = "0.12", default-features = false, features = ["tokio"], optional = true }
+arti-client = { version = "0.43", optional = true }
+tor-hsclient = { version = "0.43", optional = true }
+tor-hsservice = { version = "0.43", optional = true }
+tor-rtcompat = { version = "0.43", default-features = false, features = ["tokio"], optional = true }
 tokio = { version = "1", features = ["rt-multi-thread", "net", "io-util", "time", "macros", "sync"], optional = true }
 
 [target.'cfg(target_os = "android")'.dependencies]
