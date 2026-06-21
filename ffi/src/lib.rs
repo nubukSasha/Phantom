@@ -18,7 +18,6 @@ use sha3::{Digest, Sha3_256};
 
 #[derive(Debug, uniffi::Error)]
 pub enum KeystoreError {
-    #[uniffi(flat_error)]
     Error { msg: String },
 }
 
