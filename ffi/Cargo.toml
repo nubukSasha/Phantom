@@ -9,7 +9,7 @@ crate-type = ["cdylib", "staticlib"]
 name = "phantom_ffi"
 
 [dependencies]
-core = { path = "../core", default-features = false }
+core = { path = "../core", package = "phantom-core", default-features = false }
 uniffi = "0.28"
 tokio = { version = "1", features = ["rt", "macros"] }
 sha3 = "0.10"
