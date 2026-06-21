@@ -43,19 +43,16 @@ jobs:
 
       # ── Build native libraries ──
       - name: Build phantom_ffi (arm64-v8a)
-        run: >
-          cargo ndk --target aarch64-linux-android --platform 28
-          build --release --manifest-path ffi/Cargo.toml
+        working-directory: ffi
+        run: cargo ndk --target aarch64-linux-android --platform 28 build --release
 
       - name: Build phantom_ffi (armeabi-v7a)
-        run: >
-          cargo ndk --target armv7-linux-androideabi --platform 28
-          build --release --manifest-path ffi/Cargo.toml
+        working-directory: ffi
+        run: cargo ndk --target armv7-linux-androideabi --platform 28 build --release
 
       - name: Build phantom_ffi (x86_64)
-        run: >
-          cargo ndk --target x86_64-linux-android --platform 28
-          build --release --manifest-path ffi/Cargo.toml
+        working-directory: ffi
+        run: cargo ndk --target x86_64-linux-android --platform 28 build --release
 
       # ── Stage .so files ──
       - name: Copy .so to jniLibs
@@ -63,9 +60,9 @@ jobs:
           mkdir -p app/src/main/jniLibs/arm64-v8a
           mkdir -p app/src/main/jniLibs/armeabi-v7a
           mkdir -p app/src/main/jniLibs/x86_64
-          cp target/aarch64-linux-android/release/libphantom_ffi.so  app/src/main/jniLibs/arm64-v8a/
-          cp target/armv7-linux-androideabi/release/libphantom_ffi.so app/src/main/jniLibs/armeabi-v7a/
-          cp target/x86_64-linux-android/release/libphantom_ffi.so   app/src/main/jniLibs/x86_64/
+          cp ffi/target/aarch64-linux-android/release/libphantom_ffi.so  app/src/main/jniLibs/arm64-v8a/
+          cp ffi/target/armv7-linux-androideabi/release/libphantom_ffi.so app/src/main/jniLibs/armeabi-v7a/
+          cp ffi/target/x86_64-linux-android/release/libphantom_ffi.so   app/src/main/jniLibs/x86_64/
 
       # ── Generate Kotlin bindings from compiled library ──
       - name: Generate UniFFI Kotlin bindings
@@ -97,7 +94,7 @@ jobs:
           }
           RUSTEOF
           cargo run --release --manifest-path /tmp/uniffi-gen/Cargo.toml -- \
-            target/aarch64-linux-android/release/libphantom_ffi.so \
+            ffi/target/aarch64-linux-android/release/libphantom_ffi.so \
             app/src/main/kotlin \
             ffi/uniffi.toml
 
