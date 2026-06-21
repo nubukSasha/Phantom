@@ -121,6 +121,20 @@ pub enum PhantomError {
     AlreadyInitialized,
 }
 
+impl std::fmt::Display for PhantomError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            PhantomError::Crypto { msg } => write!(f, "Crypto error: {msg}"),
+            PhantomError::Keystore { msg } => write!(f, "Keystore error: {msg}"),
+            PhantomError::Storage { msg } => write!(f, "Storage error: {msg}"),
+            PhantomError::Network { msg } => write!(f, "Network error: {msg}"),
+            PhantomError::InvalidInput { msg } => write!(f, "Invalid input: {msg}"),
+            PhantomError::NotInitialized => write!(f, "Not initialized"),
+            PhantomError::AlreadyInitialized => write!(f, "Already initialized"),
+        }
+    }
+}
+
 impl From<StorageError> for PhantomError {
     fn from(e: StorageError) -> Self {
         PhantomError::Storage { msg: e.to_string() }

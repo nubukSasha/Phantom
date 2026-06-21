@@ -10,7 +10,7 @@ name = "phantom_ffi"
 
 [dependencies]
 core = { path = "../core", package = "phantom-core", default-features = false }
-uniffi = "0.28"
+uniffi = { version = "0.28", features = ["tokio"] }
 tokio = { version = "1", features = ["rt", "macros"] }
 sha3 = "0.10"
 data-encoding = "2.6"
