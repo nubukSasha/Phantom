@@ -1,7 +1,9 @@
 package com.phantom.bridge
 
+import android.content.Context
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
+import android.util.Base64
 import java.security.KeyPairGenerator
 import java.security.KeyStore
 import java.security.PrivateKey
@@ -12,6 +14,7 @@ import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 import com.phantom.FfiKeystoreOps
+import com.phantom.PhantomApp
 
 class AndroidKeystoreCallback : FfiKeystoreOps {
 
@@ -19,33 +22,88 @@ class AndroidKeystoreCallback : FfiKeystoreOps {
         KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
     }
 
+    private val prefs by lazy {
+        PhantomApp.instance.getSharedPreferences("phantom_keystore", Context.MODE_PRIVATE)
+    }
+
+    private val WRAP_KEY_ALIAS = "phantom_fallback_wrap"
+
+    // ── Fallback helpers ────────────────────────────────
+
+    private fun storeFallbackKey(alias: String, privateKey: PrivateKey, publicKey: PublicKey) {
+        val wrapped = wrapKey(WRAP_KEY_ALIAS, privateKey.encoded)
+        prefs.edit()
+            .putString(alias, Base64.encodeToString(wrapped, Base64.NO_WRAP))
+            .putString("$alias.pub", Base64.encodeToString(extractRawPublicKey(publicKey), Base64.NO_WRAP))
+            .apply()
+    }
+
+    private fun loadFallbackPrivate(alias: String, algorithm: String): PrivateKey {
+        val b64 = prefs.getString(alias, null) ?: throw IllegalStateException("No fallback key for $alias")
+        val wrapped = Base64.decode(b64, Base64.NO_WRAP)
+        val raw = unwrapKey(WRAP_KEY_ALIAS, wrapped)
+        return java.security.KeyFactory.getInstance(algorithm)
+            .generatePrivate(java.security.spec.PKCS8EncodedKeySpec(raw))
+    }
+
+    private fun loadFallbackPublic(alias: String): ByteArray {
+        val b64 = prefs.getString("$alias.pub", null) ?: throw IllegalStateException("No fallback public key for $alias")
+        return Base64.decode(b64, Base64.NO_WRAP)
+    }
+
+    private fun deleteFallbackKey(alias: String) {
+        prefs.edit().remove(alias).remove("$alias.pub").apply()
+    }
+
+    private fun hasHardwareKey(alias: String): Boolean {
+        return try {
+            keyStore.containsAlias(alias)
+        } catch (_: Exception) { false }
+    }
+
     // ── Ed25519 ──────────────────────────────────────────
 
     override fun ed25519Generate(alias: String): ByteArray {
-        if (keyStore.containsAlias(alias)) {
-            return loadEd25519Public(alias)
-        }
-        val spec = KeyGenParameterSpec.Builder(
-            alias, KeyProperties.PURPOSE_SIGN or KeyProperties.PURPOSE_VERIFY
-        )
-            .setAlgorithmParameterSpec(
-                java.security.spec.ECGenParameterSpec("ed25519")
+        try {
+            if (hasHardwareKey(alias)) return loadEd25519Public(alias)
+            val spec = KeyGenParameterSpec.Builder(
+                alias, KeyProperties.PURPOSE_SIGN or KeyProperties.PURPOSE_VERIFY
             )
-            .build()
-        val kpg = KeyPairGenerator.getInstance(
-            KeyProperties.KEY_ALGORITHM_EC, "AndroidKeyStore"
-        )
-        kpg.initialize(spec)
-        val kp = kpg.generateKeyPair()
-        return extractRawPublicKey(kp.public)
+                .setAlgorithmParameterSpec(
+                    java.security.spec.ECGenParameterSpec("ed25519")
+                )
+                .build()
+            val kpg = KeyPairGenerator.getInstance(
+                KeyProperties.KEY_ALGORITHM_EC, "AndroidKeyStore"
+            )
+            kpg.initialize(spec)
+            val kp = kpg.generateKeyPair()
+            return extractRawPublicKey(kp.public)
+        } catch (_: java.security.InvalidAlgorithmParameterException) {
+            // Hardware doesn't support ed25519 — software fallback
+            val kpg = KeyPairGenerator.getInstance("Ed25519")
+            val kp = kpg.generateKeyPair()
+            storeFallbackKey(alias, kp.private, kp.public)
+            return extractRawPublicKey(kp.public)
+        }
     }
 
     override fun ed25519Public(alias: String): ByteArray {
-        return loadEd25519Public(alias)
+        if (hasHardwareKey(alias)) return loadEd25519Public(alias)
+        return loadFallbackPublic(alias)
     }
 
     override fun ed25519Sign(alias: String, msg: ByteArray): ByteArray {
-        val privateKey = loadEd25519Private(alias)
+        try {
+            if (hasHardwareKey(alias)) {
+                val privateKey = loadEd25519Private(alias)
+                val sig = java.security.Signature.getInstance("Ed25519")
+                sig.initSign(privateKey)
+                sig.update(msg)
+                return sig.sign()
+            }
+        } catch (_: Exception) { }
+        val privateKey = loadFallbackPrivate(alias, "Ed25519")
         val sig = java.security.Signature.getInstance("Ed25519")
         sig.initSign(privateKey)
         sig.update(msg)
@@ -53,7 +111,10 @@ class AndroidKeystoreCallback : FfiKeystoreOps {
     }
 
     override fun ed25519Delete(alias: String) {
-        keyStore.deleteEntry(alias)
+        try {
+            if (hasHardwareKey(alias)) keyStore.deleteEntry(alias)
+        } catch (_: Exception) { }
+        deleteFallbackKey(alias)
     }
 
     private fun loadEd25519Public(alias: String): ByteArray {
@@ -69,43 +130,47 @@ class AndroidKeystoreCallback : FfiKeystoreOps {
     // ── X25519 ──────────────────────────────────────────
 
     override fun x25519Generate(alias: String): ByteArray {
-        if (keyStore.containsAlias(alias)) {
-            return loadX25519Public(alias)
-        }
-        val spec = KeyGenParameterSpec.Builder(
-            alias, KeyProperties.PURPOSE_AGREE_KEY
-        )
-            .setAlgorithmParameterSpec(
-                java.security.spec.ECGenParameterSpec("X25519")
+        try {
+            if (hasHardwareKey(alias)) return loadX25519Public(alias)
+            val spec = KeyGenParameterSpec.Builder(
+                alias, KeyProperties.PURPOSE_AGREE_KEY
             )
-            .build()
-        val kpg = KeyPairGenerator.getInstance(
-            "XDH", "AndroidKeyStore"
-        )
-        kpg.initialize(spec)
-        val kp = kpg.generateKeyPair()
-        return extractRawPublicKey(kp.public)
+                .setAlgorithmParameterSpec(
+                    java.security.spec.ECGenParameterSpec("X25519")
+                )
+                .build()
+            val kpg = KeyPairGenerator.getInstance("XDH", "AndroidKeyStore")
+            kpg.initialize(spec)
+            val kp = kpg.generateKeyPair()
+            return extractRawPublicKey(kp.public)
+        } catch (_: java.security.InvalidAlgorithmParameterException) {
+            val kpg = KeyPairGenerator.getInstance("X25519")
+            val kp = kpg.generateKeyPair()
+            storeFallbackKey(alias, kp.private, kp.public)
+            return extractRawPublicKey(kp.public)
+        }
     }
 
     override fun x25519Public(alias: String): ByteArray {
-        return loadX25519Public(alias)
+        if (hasHardwareKey(alias)) return loadX25519Public(alias)
+        return loadFallbackPublic(alias)
     }
 
     override fun x25519Agree(alias: String, peerPublic: ByteArray): ByteArray {
-        val privateKey = loadX25519Private(alias)
-        // Wrap raw 32-byte public key in X25519 SPKI DER for KeyAgreement
-        val spki = byteArrayOf(0x30, 0x2A, 0x30, 0x05, 0x06, 0x03, 0x2B, 0x65, 0x6E, 0x03, 0x21, 0x00) + peerPublic
-        val peerKeySpec = java.security.spec.X509EncodedKeySpec(spki)
-        val kf = java.security.KeyFactory.getInstance("XDH")
-        val peerPubKey = kf.generatePublic(peerKeySpec)
-        val ka = KeyAgreement.getInstance("XDH")
-        ka.init(privateKey)
-        ka.doPhase(peerPubKey, true)
-        return ka.generateSecret()
+        try {
+            if (hasHardwareKey(alias)) {
+                return x25519AgreeHardware(alias, peerPublic)
+            }
+        } catch (_: Exception) { }
+        val privateKey = loadFallbackPrivate(alias, "X25519")
+        return x25519AgreeCompute(privateKey, peerPublic)
     }
 
     override fun x25519Delete(alias: String) {
-        keyStore.deleteEntry(alias)
+        try {
+            if (hasHardwareKey(alias)) keyStore.deleteEntry(alias)
+        } catch (_: Exception) { }
+        deleteFallbackKey(alias)
     }
 
     private fun loadX25519Public(alias: String): ByteArray {
@@ -116,6 +181,22 @@ class AndroidKeystoreCallback : FfiKeystoreOps {
     private fun loadX25519Private(alias: String): PrivateKey {
         val entry = keyStore.getEntry(alias, null) as KeyStore.PrivateKeyEntry
         return entry.privateKey
+    }
+
+    private fun x25519AgreeHardware(alias: String, peerPublic: ByteArray): ByteArray {
+        val privateKey = loadX25519Private(alias)
+        return x25519AgreeCompute(privateKey, peerPublic)
+    }
+
+    private fun x25519AgreeCompute(privateKey: PrivateKey, peerPublic: ByteArray): ByteArray {
+        val spki = byteArrayOf(0x30, 0x2A, 0x30, 0x05, 0x06, 0x03, 0x2B, 0x65, 0x6E, 0x03, 0x21, 0x00) + peerPublic
+        val peerKeySpec = java.security.spec.X509EncodedKeySpec(spki)
+        val kf = java.security.KeyFactory.getInstance("XDH")
+        val peerPubKey = kf.generatePublic(peerKeySpec)
+        val ka = KeyAgreement.getInstance("XDH")
+        ka.init(privateKey)
+        ka.doPhase(peerPubKey, true)
+        return ka.generateSecret()
     }
 
     // ── AES wrap/unwrap ─────────────────────────────────
@@ -173,11 +254,11 @@ class AndroidKeystoreCallback : FfiKeystoreOps {
         readLength()
 
         require(encoded[idx++].toInt() == 0x30) { "Expected algorithm SEQUENCE" }
-        idx += readLength() // skip algorithm identifier contents
+        idx += readLength()
 
         require(encoded[idx++].toInt() == 0x03) { "Expected BIT STRING" }
         val bitStringLen = readLength()
-        idx++ // skip unused bits byte
+        idx++
         return encoded.copyOfRange(idx, idx + bitStringLen - 1)
     }
 }
