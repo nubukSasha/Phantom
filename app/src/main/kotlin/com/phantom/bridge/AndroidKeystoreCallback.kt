@@ -31,17 +31,17 @@ class AndroidKeystoreCallback : FfiKeystoreOps {
     // ── Fallback helpers ────────────────────────────────
 
     private fun storeFallbackKey(alias: String, privateKey: PrivateKey, publicKey: PublicKey) {
-        val wrapped = wrapKey(WRAP_KEY_ALIAS, privateKey.encoded)
+        val encrypted = encryptData(WRAP_KEY_ALIAS, privateKey.encoded)
         prefs.edit()
-            .putString(alias, Base64.encodeToString(wrapped, Base64.NO_WRAP))
+            .putString(alias, Base64.encodeToString(encrypted, Base64.NO_WRAP))
             .putString("$alias.pub", Base64.encodeToString(extractRawPublicKey(publicKey), Base64.NO_WRAP))
             .apply()
     }
 
     private fun loadFallbackPrivate(alias: String, algorithm: String): PrivateKey {
         val b64 = prefs.getString(alias, null) ?: throw IllegalStateException("No fallback key for $alias")
-        val wrapped = Base64.decode(b64, Base64.NO_WRAP)
-        val raw = unwrapKey(WRAP_KEY_ALIAS, wrapped)
+        val encrypted = Base64.decode(b64, Base64.NO_WRAP)
+        val raw = decryptData(WRAP_KEY_ALIAS, encrypted)
         return java.security.KeyFactory.getInstance(algorithm)
             .generatePrivate(java.security.spec.PKCS8EncodedKeySpec(raw))
     }
@@ -215,6 +215,23 @@ class AndroidKeystoreCallback : FfiKeystoreOps {
         cipher.init(Cipher.UNWRAP_MODE, wrappingKey)
         val secretKey = cipher.unwrap(wrapped, "AES", Cipher.SECRET_KEY)
         return secretKey.encoded
+    }
+
+    private fun encryptData(alias: String, plaintext: ByteArray): ByteArray {
+        val key = getOrCreateWrappingKey(alias)
+        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+        cipher.init(Cipher.ENCRYPT_MODE, key)
+        val ciphertext = cipher.doFinal(plaintext)
+        return cipher.iv + ciphertext
+    }
+
+    private fun decryptData(alias: String, blob: ByteArray): ByteArray {
+        val key = getOrCreateWrappingKey(alias)
+        val iv = blob.copyOfRange(0, 12)
+        val ciphertext = blob.copyOfRange(12, blob.size)
+        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+        cipher.init(Cipher.DECRYPT_MODE, key, GCMParameterSpec(128, iv))
+        return cipher.doFinal(ciphertext)
     }
 
     private fun getOrCreateWrappingKey(alias: String): SecretKey {
