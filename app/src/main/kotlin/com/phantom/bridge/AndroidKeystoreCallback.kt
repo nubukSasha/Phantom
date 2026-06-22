@@ -26,12 +26,10 @@ class AndroidKeystoreCallback : FfiKeystoreOps {
         PhantomApp.instance.getSharedPreferences("phantom_keystore", Context.MODE_PRIVATE)
     }
 
-    private val WRAP_KEY_ALIAS = "phantom_fallback_wrap"
-
     // ── Fallback helpers ────────────────────────────────
 
     private fun storeFallbackKey(alias: String, privateKey: PrivateKey, publicKey: PublicKey) {
-        val encrypted = encryptData(WRAP_KEY_ALIAS, privateKey.encoded)
+        val encrypted = encryptData(privateKey.encoded)
         prefs.edit()
             .putString(alias, Base64.encodeToString(encrypted, Base64.NO_WRAP))
             .putString("$alias.pub", Base64.encodeToString(extractRawPublicKey(publicKey), Base64.NO_WRAP))
@@ -41,7 +39,7 @@ class AndroidKeystoreCallback : FfiKeystoreOps {
     private fun loadFallbackPrivate(alias: String, algorithm: String): PrivateKey {
         val b64 = prefs.getString(alias, null) ?: throw IllegalStateException("No fallback key for $alias")
         val encrypted = Base64.decode(b64, Base64.NO_WRAP)
-        val raw = decryptData(WRAP_KEY_ALIAS, encrypted)
+        val raw = decryptData(encrypted)
         return java.security.KeyFactory.getInstance(algorithm)
             .generatePrivate(java.security.spec.PKCS8EncodedKeySpec(raw))
     }
@@ -217,16 +215,37 @@ class AndroidKeystoreCallback : FfiKeystoreOps {
         return secretKey.encoded
     }
 
-    private fun encryptData(alias: String, plaintext: ByteArray): ByteArray {
-        val key = getOrCreateWrappingKey(alias)
+    private val ENC_KEY_ALIAS = "phantom_enc_fallback"
+
+    private fun getOrCreateEncryptionKey(): SecretKey {
+        if (keyStore.containsAlias(ENC_KEY_ALIAS)) {
+            return keyStore.getKey(ENC_KEY_ALIAS, null) as SecretKey
+        }
+        val spec = KeyGenParameterSpec.Builder(
+            ENC_KEY_ALIAS,
+            KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT
+        )
+            .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
+            .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
+            .setKeySize(256)
+            .build()
+        val kg = KeyGenerator.getInstance(
+            KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore"
+        )
+        kg.init(spec)
+        return kg.generateKey()
+    }
+
+    private fun encryptData(plaintext: ByteArray): ByteArray {
+        val key = getOrCreateEncryptionKey()
         val cipher = Cipher.getInstance("AES/GCM/NoPadding")
         cipher.init(Cipher.ENCRYPT_MODE, key)
         val ciphertext = cipher.doFinal(plaintext)
         return cipher.iv + ciphertext
     }
 
-    private fun decryptData(alias: String, blob: ByteArray): ByteArray {
-        val key = getOrCreateWrappingKey(alias)
+    private fun decryptData(blob: ByteArray): ByteArray {
+        val key = getOrCreateEncryptionKey()
         val iv = blob.copyOfRange(0, 12)
         val ciphertext = blob.copyOfRange(12, blob.size)
         val cipher = Cipher.getInstance("AES/GCM/NoPadding")
